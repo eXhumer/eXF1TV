@@ -26,11 +26,21 @@ signals:
   void locationGroupIdChanged(int newLocationId);
   void ascendonTokenUpdated();
   void entitlementTokenUpdated();
+  void pageQueried(int pageNumber, const QJsonObject &pageData);
+  void liveSessionsAvailable(const QJsonArray &liveSessions);
 
 public:
   F1TV(QNetworkAccessManager *nam = nullptr, QObject *parent = nullptr);
 
 public slots:
+  void queryPage(int pageNumber);
+  void queryLiveSessions();
+  void querySessionChannels(long contentId);
+  void queryTokenisedUrl(const QString &contentUrl);
+  void searchSeasonEvents(int year);
+  void searchSeasonEpisodes(int year);
+  void searchEventVideos(const QString &meetingKey);
+  void searchGenreVideos(const QString &genre);
   void revoke();
 };
 

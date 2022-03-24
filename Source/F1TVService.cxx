@@ -116,6 +116,67 @@ void F1TV::onNetReachChanged(QNetworkInformation::Reachability reachability) {
     updateLocation();
 }
 
+void F1TV::queryPage(int pageNumber) {
+  QNetworkRequest req(QUrl(m_baseUrl + "/2.0/" + authStatus() + "/" +
+                           m_language + "/" + m_platform + "/ALL/PAGE/" +
+                           QString::number(pageNumber) + "/" + subStatus() +
+                           "/" + QString::number(m_locationGroupId)));
+  auto res = m_nam->get(req);
+  connect(res, &QNetworkReply::finished, this, [this, pageNumber, res]() {
+    if (res->error() != QNetworkReply::NoError) {
+      qDebug() << "Error:" << res->readAll();
+      return;
+    }
+
+    emit this->pageQueried(pageNumber,
+                           QJsonDocument::fromJson(res->readAll()).object());
+  });
+  connect(res, &QNetworkReply::finished, res, &QNetworkReply::deleteLater);
+}
+
+void F1TV::queryLiveSessions() {
+  auto reqCtx = new QObject;
+  connect(this, &F1TV::pageQueried, reqCtx,
+          [this, reqCtx](int pageNumber, const QJsonObject &pageData) {
+            if (pageNumber == 395) {
+              QJsonArray containers =
+                  pageData["resultObj"].toObject()["containers"].toArray();
+              QJsonArray contentContainers;
+              for (auto &&container : containers) {
+                auto subContainers = container.toObject()["retrieveItems"]
+                                         .toObject()["resultObj"]
+                                         .toObject()["containers"]
+                                         .toArray();
+                for (auto &&contentContainer : subContainers) {
+                  auto subContainerJson = contentContainer.toObject();
+                  if (subContainerJson.contains("metadata") &&
+                      subContainerJson["contentType"].toString() == "VIDEO" &&
+                      subContainerJson["contentSubtype"].toString() == "LIVE")
+                    contentContainers.append(contentContainer);
+                }
+              }
+
+              if (!contentContainers.isEmpty())
+                emit this->liveSessionsAvailable(contentContainers);
+
+              reqCtx->deleteLater();
+            }
+          });
+  queryPage(395);
+}
+
+void F1TV::querySessionChannels(long contentId) {}
+
+void F1TV::queryTokenisedUrl(const QString &contentUrl) {}
+
+void F1TV::searchSeasonEvents(int year) {}
+
+void F1TV::searchSeasonEpisodes(int year) {}
+
+void F1TV::searchEventVideos(const QString &meetingKey) {}
+
+void F1TV::searchGenreVideos(const QString &genre) {}
+
 void F1TV::revoke() {
   m_ascendonToken = QString();
   m_entitlementToken = QString();
