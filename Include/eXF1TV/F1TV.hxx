@@ -1,6 +1,7 @@
 #ifndef EXF1TV_F1TV_HXX
 #define EXF1TV_F1TV_HXX
 
+#include <QJsonArray>
 #include <QNetworkAccessManager>
 #include <QNetworkInformation>
 
@@ -24,23 +25,21 @@ private slots:
 
 signals:
   void locationGroupIdChanged(int newLocationId);
-  void ascendonTokenUpdated();
-  void entitlementTokenUpdated();
+  void ascendonTokenChanged();
+  void entitlementTokenChanged();
+  void contentStreams(long contentId, const QJsonArray &streams);
   void pageQueried(int pageNumber, const QJsonObject &pageData);
   void liveSessionsAvailable(const QJsonArray &liveSessions);
+  void tokenisedUrl(const QString &playbackUrl, const QString &tokenisedUrl);
 
 public:
   F1TV(QNetworkAccessManager *nam = nullptr, QObject *parent = nullptr);
 
 public slots:
   void queryPage(int pageNumber);
-  void queryLiveSessions();
-  void querySessionChannels(long contentId);
-  void queryTokenisedUrl(const QString &contentUrl);
-  void searchSeasonEvents(int year);
-  void searchSeasonEpisodes(int year);
-  void searchEventVideos(const QString &meetingKey);
-  void searchGenreVideos(const QString &genre);
+  void queryLiveContents();
+  void queryContentStreams(long contentId);
+  void queryTokenisedUrl(const QString &playbackUrl);
   void revoke();
 };
 
